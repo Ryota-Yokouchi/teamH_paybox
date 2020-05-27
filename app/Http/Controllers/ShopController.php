@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Shop;
 use App\Http\Requests\StoreShop;
-
-const DISTANCE = 0.000011;
  
 class ShopController extends Controller
 {
@@ -20,14 +18,34 @@ class ShopController extends Controller
         // 引数から緯度経度取得
         $s_latitude = $request->input('latitude');
         $s_longitude = $request->input('longitude');
-        
+        $s_range = $request->input('range');
+        $s_category = $request->input('category');
+
+        $shops = []; 
+        $message = '';
+   
         // 緯度経度が引数にあるならその値を中心に-0.000011 ~ 0.000011の範囲でお店の名前と座標を取得する。引数がなければ全件取得する。
-        if(!empty($s_latitude) && !empty($s_longitude)) {
-          $shops = Shop::getShops($s_latitude, $s_longitude);
-        } else {
+        if(!empty($s_latitude) && !empty($s_longitude) && !empty($s_range) && !empty($s_category)) {
+          $shops = Shop::getCategoryShops($s_latitude, $s_longitude, $s_range, $s_category);
+        }
+        if (!empty($s_latitude) && !empty($s_longitude) && !empty($s_range) && empty($s_category)) {
+          $shops = Shop::getShops($s_latitude, $s_longitude, $s_range);
+        } 
+        if(empty($s_latitude) && empty($s_longitude) && empty($s_range) && !empty($s_category)) {
+          $shops = Shop::getCategorys($s_category);
+        } 
+        if(empty($s_latitude) && empty($s_longitude) && empty($s_range) && empty($s_category)) {
           $shops = Shop::all();
         }
 
+        return response()->json([
+            'message' => $message,
+            'data' => $shops
+        ], 200, [], JSON_UNESCAPED_UNICODE);
+    }
+
+    public function findShops($latitude, $longitude, $range) {
+        $shops = Shop::all();  
         return response()->json([
             'message' => 'ok',
             'data' => $shops
